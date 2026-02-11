@@ -43,11 +43,27 @@ cron.schedule('0 3 2,12,22 * *', async () => {
   try {
     await crawlAllCities();
     console.log('✅ 定時抓取完成');
-  } catch (e) {
-    console.error('❌ 定時抓取失敗:', e);
+  } catch (e: any) {
+    console.error('❌ 定時抓取失敗:', e?.message || e);
   }
 }, {
   timezone: 'Asia/Taipei'
+});
+
+// Express 全局錯誤處理中間件
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('❌ 服務器錯誤:', err);
+  res.status(500).json({ success: false, error: err?.message || '未知錯誤' });
+});
+
+// 全局錯誤處理
+process.on('uncaughtException', (error) => {
+  console.error('❌ 未捕獲的例外:', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ 未處理的 Promise 拒絕:', reason);
 });
 
 // 啟動伺服器

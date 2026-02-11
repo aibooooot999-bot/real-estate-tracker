@@ -1,7 +1,15 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
 const dbPath = path.join(__dirname, '../../data/real_estate.db');
+const dbDir = path.dirname(dbPath);
+
+// 確保資料庫目錄存在
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
 const db = new Database(dbPath);
 
 // 初始化資料表
@@ -174,9 +182,7 @@ export function getPriceTrend(district?: string) {
     bindings.push(`%${district}%`);
   }
   
-  sql += ' GROUP BY month ORDER BY month DESC LIMIT 24';
+  sql += ' GROUP BY substr(transaction_date, 1, 7) ORDER BY month DESC';
   
   return db.prepare(sql).all(...bindings);
 }
-
-export default db;

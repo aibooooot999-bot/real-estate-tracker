@@ -1,13 +1,27 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { queryTransactions, getStatistics, getPriceTrend } from '../database';
 import { crawlAllCities } from '../crawler';
 
 const router = Router();
 
+// 異步路由包裝器
+const asyncHandler = (fn: (req: Request, res: Response) => Promise<void>) => 
+  (req: Request, res: Response, next: any) => {
+    Promise.resolve(fn(req, res)).catch(next);
+  };
+
 // 取得交易資料列表
 router.get('/transactions', (req, res) => {
   try {
-    const { district, minPrice, maxPrice, startDate, endDate, limit = '50', offset = '0' } = req.query;
+    const {
+      district,
+      minPrice,
+      maxPrice,
+      startDate,
+      endDate,
+      limit = '50',
+      offset = '0'
+    } = req.query;
     
     const data = queryTransactions({
       district: district as string,
@@ -21,7 +35,7 @@ router.get('/transactions', (req, res) => {
     
     res.json({ success: true, data, count: data.length });
   } catch (e: any) {
-    res.status(500).json({ success: false, error: e.message });
+    res.status(500).json({ success: false, error: e?.message || '未知錯誤' });
   }
 });
 
@@ -31,7 +45,7 @@ router.get('/statistics', (req, res) => {
     const data = getStatistics();
     res.json({ success: true, data });
   } catch (e: any) {
-    res.status(500).json({ success: false, error: e.message });
+    res.status(500).json({ success: false, error: e?.message || '未知錯誤' });
   }
 });
 
@@ -42,19 +56,17 @@ router.get('/trend', (req, res) => {
     const data = getPriceTrend(district as string);
     res.json({ success: true, data });
   } catch (e: any) {
-    res.status(500).json({ success: false, error: e.message });
+    res.status(500).json({ success: false, error: e?.message || '未知錯誤' });
   }
 });
 
 // 手動觸發抓取
-router.post('/crawl', async (req, res) => {
-  try {
-    const { season } = req.body;
-    const count = await crawlAllCities(season);
-    res.json({ success: true, message: `已新增 ${count} 筆資料` });
-  } catch (e: any) {
-    res.status(500).json({ success: false, error: e.message });
-  }
-});
+router.post('/crawl', asyncHandler(async (req, res) => {
+  const { season, year, quarter } = req.body;
+  const rocYear = typeof year === 'string' ? parseInt(year) : year;
+  const seasonQuarter = typeof quarter === 'string' ? parseInt(quarter) : quarter;
+  const count = await crawlAllCities(season, rocYear, seasonQuarter);
+  res.json({ success: true, message: `已新增 ${count} 筆資料` });
+}));
 
 export default router;

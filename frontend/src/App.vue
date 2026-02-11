@@ -45,6 +45,45 @@ const trendData = ref<TrendData[]>([])
 const loading = ref(false)
 const crawling = ref(false)
 
+// 計算當前民國年份和季度
+function getCurrentRocYearAndSeason() {
+  const now = new Date()
+  const year = now.getFullYear() - 1911 // 民國年
+  const month = now.getMonth() + 1
+  let season: number
+  
+  if (month <= 3) season = 4 // Q1 看上一季
+  else if (month <= 6) season = 1
+  else if (month <= 9) season = 2
+  else season = 3
+  
+  const actualYear = month <= 3 ? year - 1 : year
+  return { year: actualYear, season }
+}
+
+const currentPeriod = getCurrentRocYearAndSeason()
+
+// 年份和季度選擇
+const selectedYear = ref(currentPeriod.year.toString())
+const selectedSeason = ref(currentPeriod.season.toString())
+
+// 生成年份選項（民國100年到當前+1年）
+const yearOptions = computed(() => {
+  const currentYear = new Date().getFullYear() - 1911
+  const years: string[] = []
+  for (let y = 100; y <= currentYear + 1; y++) {
+    years.push(y.toString())
+  }
+  return years.reverse() // 新的年份在前
+})
+
+const seasonOptions = [
+  { value: '1', label: '第一季 (1-3月)' },
+  { value: '2', label: '第二季 (4-6月)' },
+  { value: '3', label: '第三季 (7-9月)' },
+  { value: '4', label: '第四季 (10-12月)' },
+]
+
 // 篩選條件
 const filters = ref({
   district: '',
@@ -61,6 +100,8 @@ async function fetchStatistics() {
     if (data.success) {
       statistics.value = data.data
     }
+
+    console.log('Fetched statistics:', data.data)
   } catch (e) {
     console.error('Failed to fetch statistics:', e)
   }
@@ -104,11 +145,15 @@ async function fetchTrend() {
 
 // 手動抓取資料
 async function triggerCrawl() {
-  if (!confirm('確定要開始抓取最新資料？這可能需要幾分鐘時間。')) return
+  const season = `${selectedYear.value}S${selectedSeason.value}`
+  const yearAD = parseInt(selectedYear.value) + 1911
+  const seasonText = seasonOptions.find(s => s.value === selectedSeason.value)?.label || ''
+  
+  if (!confirm(`確定要抓取 民國${selectedYear.value}年 ${seasonText} (西元${yearAD}年) 的資料？\n這可能需要幾分鐘時間。`)) return
   
   crawling.value = true
   try {
-    const { data } = await axios.post('/api/crawl')
+    const { data } = await axios.post('/api/crawl', { season })
     alert(data.message || '抓取完成')
     await Promise.all([fetchStatistics(), fetchTransactions(), fetchTrend()])
   } catch (e: any) {
@@ -122,6 +167,7 @@ async function triggerCrawl() {
 function search() {
   fetchTransactions()
   fetchTrend()
+  fetchStatistics()
 }
 
 // 重置篩選
@@ -135,6 +181,7 @@ function resetFilters() {
   }
   fetchTransactions()
   fetchTrend()
+  fetchStatistics()
 }
 
 // 格式化價格
@@ -151,6 +198,17 @@ function formatPrice(price: number): string {
 function formatUnitPrice(price: number): string {
   if (!price) return '-'
   return (price / 10000).toFixed(1) + ' 萬/坪'
+}
+
+// 格式化日期
+function formatDate(dateStr: string): string {
+  if (!dateStr) return '-'
+  // 確保日期格式正確 YYYY-MM-DD
+  const match = dateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+  if (!match) return dateStr
+  
+  const [, year, month, day] = match
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
 }
 
 // 圖表資料
@@ -178,7 +236,7 @@ const chartOptions = {
     y: {
       beginAtZero: false,
       ticks: {
-        callback: (value: number) => value + ' 萬'
+        callback: (value: string | number) => value + ' 萬'
       }
     }
   }
@@ -213,7 +271,7 @@ onMounted(() => {
         <div class="label">涵蓋區域</div>
       </div>
       <div class="stat-card">
-        <div class="value">{{ statistics.latestDate || '-' }}</div>
+        <div class="value">{{ formatDate(statistics.latestDate) }}</div>
         <div class="label">最新資料日期</div>
       </div>
     </div>
@@ -228,13 +286,40 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- 資料更新 -->
+    <div class="card">
+      <div class="card-header">
+        🔄 資料更新
+      </div>
+      <div class="card-body">
+        <div class="filter-row">
+          <label style="display: flex; align-items: center; gap: 8px;">
+            <span style="white-space: nowrap;">民國年份：</span>
+            <select v-model="selectedYear" style="flex: 1;">
+              <option v-for="y in yearOptions" :key="y" :value="y">
+                民國{{ y }}年 (西元{{ parseInt(y) + 1911 }}年)
+              </option>
+            </select>
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px;">
+            <span style="white-space: nowrap;">季度：</span>
+            <select v-model="selectedSeason" style="flex: 1;">
+              <option v-for="s in seasonOptions" :key="s.value" :value="s.value">
+                {{ s.label }}
+              </option>
+            </select>
+          </label>
+          <button class="btn btn-primary" @click="triggerCrawl" :disabled="crawling" style="white-space: nowrap;">
+            {{ crawling ? '抓取中...' : '🔄 抓取資料' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 搜尋篩選 -->
     <div class="card">
       <div class="card-header">
         🔍 搜尋條件
-        <button class="btn btn-primary" @click="triggerCrawl" :disabled="crawling">
-          {{ crawling ? '抓取中...' : '更新資料' }}
-        </button>
       </div>
       <div class="card-body">
         <div class="filter-row">
@@ -276,7 +361,7 @@ onMounted(() => {
           </thead>
           <tbody>
             <tr v-for="t in transactions" :key="t.id">
-              <td>{{ t.transaction_date }}</td>
+              <td>{{ formatDate(t.transaction_date) }}</td>
               <td>{{ t.district }}</td>
               <td>{{ t.address?.substring(0, 20) }}...</td>
               <td>{{ t.building_type || '-' }}</td>
