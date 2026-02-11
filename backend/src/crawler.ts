@@ -229,6 +229,8 @@ async function crawlCity(cityCode: string, cityName: string, season: string) {
       const transactionDate = convertDate(row['交易年月日'] || '');
       const totalPrice = parseInt(row['總價元'] || row['總價(元)'] || '0') || 0;
       const unitPrice = parseInt(row['單價元平方公尺'] || row['單價(元/平方公尺)'] || '0') || 0;
+      // 案名/建案名稱（預售屋資料會有此欄位）
+      const projectName = row['建案名稱'] || row['案名'] || null;
       
       const fullDistrict = district
         ? (district.startsWith(cityName) ? district : `${cityName}${district}`)
@@ -238,6 +240,7 @@ async function crawlCity(cityCode: string, cityName: string, season: string) {
         district: fullDistrict,
         transaction_type: row['交易標的'] || '房地(土地+建物)',
         address,
+        project_name: projectName,
         land_area: toPin(row['土地移轉總面積平方公尺'] || row['土地移轉總面積(平方公尺)'] || 0),
         building_area: toPin(row['建物移轉總面積平方公尺'] || row['建物移轉總面積(平方公尺)'] || 0),
         floor: row['移轉層次'] || null,

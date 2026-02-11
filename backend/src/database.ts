@@ -20,6 +20,7 @@ export function initDatabase() {
       district TEXT,
       transaction_type TEXT,
       address TEXT,
+      project_name TEXT,
       land_area REAL,
       building_area REAL,
       floor TEXT,
@@ -44,7 +45,20 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_transaction_date ON transactions(transaction_date);
     CREATE INDEX IF NOT EXISTS idx_total_price ON transactions(total_price);
     CREATE INDEX IF NOT EXISTS idx_unit_price ON transactions(unit_price);
+    CREATE INDEX IF NOT EXISTS idx_project_name ON transactions(project_name);
   `);
+
+  // 檢查並新增 project_name 欄位（相容舊資料庫）
+  try {
+    const columns = db.prepare("PRAGMA table_info(transactions)").all() as { name: string }[];
+    const hasProjectName = columns.some(col => col.name === 'project_name');
+    if (!hasProjectName) {
+      db.exec('ALTER TABLE transactions ADD COLUMN project_name TEXT');
+      console.log('✅ 已新增 project_name 欄位');
+    }
+  } catch (e) {
+    // 忽略
+  }
   
   console.log('✅ 資料庫初始化完成');
 }
@@ -54,6 +68,7 @@ export function insertTransaction(data: {
   district: string;
   transaction_type: string;
   address: string;
+  project_name: string | null;
   land_area: number | null;
   building_area: number | null;
   floor: string | null;
@@ -73,12 +88,12 @@ export function insertTransaction(data: {
 }) {
   const stmt = db.prepare(`
     INSERT OR IGNORE INTO transactions (
-      district, transaction_type, address, land_area, building_area,
+      district, transaction_type, address, project_name, land_area, building_area,
       floor, total_floor, building_type, main_use, construction,
       build_year, transaction_date, total_price, unit_price,
       parking_type, parking_price, note, source, raw_data
     ) VALUES (
-      @district, @transaction_type, @address, @land_area, @building_area,
+      @district, @transaction_type, @address, @project_name, @land_area, @building_area,
       @floor, @total_floor, @building_type, @main_use, @construction,
       @build_year, @transaction_date, @total_price, @unit_price,
       @parking_type, @parking_price, @note, @source, @raw_data
@@ -109,6 +124,9 @@ export function queryTransactions(params: {
   maxPrice?: number;
   startDate?: string;
   endDate?: string;
+  projectName?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
   limit?: number;
   offset?: number;
 }) {
@@ -135,8 +153,16 @@ export function queryTransactions(params: {
     sql += ' AND transaction_date <= ?';
     bindings.push(params.endDate);
   }
+  if (params.projectName) {
+    sql += ' AND project_name LIKE ?';
+    bindings.push(`%${params.projectName}%`);
+  }
   
-  sql += ' ORDER BY transaction_date DESC';
+  // 排序邏輯
+  const allowedSortFields = ['transaction_date', 'total_price', 'unit_price', 'project_name', 'building_area'];
+  const sortField = allowedSortFields.includes(params.sortBy || '') ? params.sortBy : 'transaction_date';
+  const sortOrder = params.sortOrder === 'asc' ? 'ASC' : 'DESC';
+  sql += ` ORDER BY ${sortField} ${sortOrder}`;
   
   if (params.limit) {
     sql += ' LIMIT ?';

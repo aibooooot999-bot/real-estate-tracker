@@ -19,6 +19,9 @@ router.get('/transactions', (req, res) => {
       maxPrice,
       startDate,
       endDate,
+      projectName,
+      sortBy,
+      sortOrder,
       limit = '50',
       offset = '0'
     } = req.query;
@@ -29,6 +32,9 @@ router.get('/transactions', (req, res) => {
       maxPrice: maxPrice ? parseInt(maxPrice as string) : undefined,
       startDate: startDate as string,
       endDate: endDate as string,
+      projectName: projectName as string,
+      sortBy: sortBy as string,
+      sortOrder: sortOrder as 'asc' | 'desc',
       limit: parseInt(limit as string),
       offset: parseInt(offset as string),
     });

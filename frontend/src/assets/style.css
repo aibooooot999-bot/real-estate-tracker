@@ -164,6 +164,25 @@ tr:hover {
   font-weight: 600;
 }
 
+.project-name {
+  color: #2c3e50;
+  font-weight: 500;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.sortable:hover {
+  background: #e8e8e8;
+}
+
 .loading {
   text-align: center;
   padding: 40px;

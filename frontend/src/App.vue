@@ -19,6 +19,7 @@ interface Transaction {
   id: number
   district: string
   address: string
+  project_name: string
   building_area: number
   total_price: number
   unit_price: number
@@ -91,7 +92,29 @@ const filters = ref({
   maxPrice: '',
   startDate: '',
   endDate: '',
+  projectName: '',
 })
+
+// 排序狀態
+const sortBy = ref('transaction_date')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+
+// 切換排序
+function toggleSort(field: string) {
+  if (sortBy.value === field) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortBy.value = field
+    sortOrder.value = 'desc'
+  }
+  fetchTransactions()
+}
+
+// 取得排序圖示
+function getSortIcon(field: string): string {
+  if (sortBy.value !== field) return '↕️'
+  return sortOrder.value === 'asc' ? '↑' : '↓'
+}
 
 // 取得統計資料
 async function fetchStatistics() {
@@ -117,6 +140,9 @@ async function fetchTransactions() {
     if (filters.value.maxPrice) params.append('maxPrice', filters.value.maxPrice)
     if (filters.value.startDate) params.append('startDate', filters.value.startDate)
     if (filters.value.endDate) params.append('endDate', filters.value.endDate)
+    if (filters.value.projectName) params.append('projectName', filters.value.projectName)
+    params.append('sortBy', sortBy.value)
+    params.append('sortOrder', sortOrder.value)
     params.append('limit', '100')
     
     const { data } = await axios.get(`/api/transactions?${params}`)
@@ -178,7 +204,10 @@ function resetFilters() {
     maxPrice: '',
     startDate: '',
     endDate: '',
+    projectName: '',
   }
+  sortBy.value = 'transaction_date'
+  sortOrder.value = 'desc'
   fetchTransactions()
   fetchTrend()
   fetchStatistics()
@@ -327,6 +356,7 @@ onMounted(() => {
             <option value="">所有區域</option>
             <option v-for="d in statistics?.districts" :key="d" :value="d">{{ d }}</option>
           </select>
+          <input v-model="filters.projectName" type="text" placeholder="案名搜尋">
           <input v-model="filters.minPrice" type="number" placeholder="最低總價 (元)">
           <input v-model="filters.maxPrice" type="number" placeholder="最高總價 (元)">
           <input v-model="filters.startDate" type="date" placeholder="開始日期">
@@ -352,19 +382,25 @@ onMounted(() => {
             <tr>
               <th>交易日期</th>
               <th>區域</th>
+              <th class="sortable" @click="toggleSort('project_name')">
+                案名 {{ getSortIcon('project_name') }}
+              </th>
               <th>地址</th>
-              <th>建物型態</th>
               <th>坪數</th>
-              <th>總價</th>
-              <th>單價</th>
+              <th class="sortable" @click="toggleSort('total_price')">
+                總價 {{ getSortIcon('total_price') }}
+              </th>
+              <th class="sortable" @click="toggleSort('unit_price')">
+                單價 {{ getSortIcon('unit_price') }}
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="t in transactions" :key="t.id">
               <td>{{ formatDate(t.transaction_date) }}</td>
               <td>{{ t.district }}</td>
+              <td class="project-name">{{ t.project_name || '-' }}</td>
               <td>{{ t.address?.substring(0, 20) }}...</td>
-              <td>{{ t.building_type || '-' }}</td>
               <td>{{ t.building_area?.toFixed(1) || '-' }} 坪</td>
               <td class="price">{{ formatPrice(t.total_price) }}</td>
               <td class="unit-price">{{ formatUnitPrice(t.unit_price) }}</td>
