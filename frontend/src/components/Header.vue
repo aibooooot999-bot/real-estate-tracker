@@ -21,7 +21,7 @@ const searchQuery = ref('')
 </script>
 
 <template>
-  <header class="sticky top-0 z-40 flex w-full bg-white drop-shadow-1 dark:bg-boxdark dark:drop-shadow-none">
+  <header class="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-boxdark dark:drop-shadow-none">
     <div class="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
       <!-- Left: Hamburger + Search -->
       <div class="flex items-center gap-2 sm:gap-4 lg:hidden">
@@ -81,26 +81,26 @@ const searchQuery = ref('')
             v-model="searchQuery"
             type="text"
             placeholder="搜尋案名或區域..."
-            class="w-full bg-transparent pl-12 pr-4 font-medium focus:outline-none xl:w-125"
+            class="w-full bg-transparent pl-12 pr-4 text-black focus:outline-none xl:w-125 dark:text-white"
           />
         </div>
       </div>
 
-      <!-- Right: Theme Toggle + Info -->
+      <!-- Right: Theme Toggle + Notification + User -->
       <div class="flex items-center gap-3 2xsm:gap-7">
         <!-- Theme Toggle -->
         <button
           @click="toggleTheme"
-          class="flex h-10 w-10 items-center justify-center rounded-full border border-stroke bg-gray hover:text-primary-600 dark:border-strokedark dark:bg-meta-4 dark:hover:text-white"
+          class="flex h-8.5 w-8.5 items-center justify-center rounded-full border border-stroke bg-gray hover:text-primary dark:border-strokedark dark:bg-meta-4 dark:hover:text-white"
         >
-          <span v-if="isDark" class="text-xl">☀️</span>
-          <span v-else class="text-xl">🌙</span>
+          <span v-if="isDark" class="text-lg">☀️</span>
+          <span v-else class="text-lg">🌙</span>
         </button>
 
         <!-- Notification -->
         <div class="relative">
-          <button class="flex h-10 w-10 items-center justify-center rounded-full border border-stroke bg-gray hover:text-primary-600 dark:border-strokedark dark:bg-meta-4">
-            <span class="text-xl">🔔</span>
+          <button class="flex h-8.5 w-8.5 items-center justify-center rounded-full border border-stroke bg-gray hover:text-primary dark:border-strokedark dark:bg-meta-4 dark:hover:text-white">
+            <span class="text-lg">🔔</span>
           </button>
           <span class="absolute -top-0.5 right-0 z-1 h-2 w-2 rounded-full bg-meta-1">
             <span class="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-meta-1 opacity-75"></span>
@@ -111,9 +111,9 @@ const searchQuery = ref('')
         <div class="flex items-center gap-4">
           <span class="hidden text-right lg:block">
             <span class="block text-sm font-medium text-black dark:text-white">小龍蝦</span>
-            <span class="block text-xs text-bodydark2">管理員</span>
+            <span class="block text-xs">管理員</span>
           </span>
-          <span class="h-12 w-12 rounded-full bg-primary-500 flex items-center justify-center text-2xl">
+          <span class="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-2xl">
             🦞
           </span>
         </div>

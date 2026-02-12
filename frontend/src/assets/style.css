@@ -5,7 +5,11 @@
 /* ===== Custom Base Styles ===== */
 @layer base {
   body {
-    @apply font-sans bg-whiten text-slate-700 dark:bg-boxdark-2 dark:text-bodydark;
+    @apply font-satoshi bg-whiten text-body dark:bg-boxdark-2 dark:text-bodydark;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-black dark:text-white;
   }
 }
 
@@ -15,29 +19,45 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-whiten dark:bg-boxdark;
+  @apply bg-gray-2 dark:bg-meta-4;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-400/50 rounded-full hover:bg-slate-400;
+  @apply bg-bodydark2 rounded-md hover:bg-body dark:bg-bodydark dark:hover:bg-bodydark1;
 }
 
 /* ===== Cards ===== */
 .card {
-  @apply rounded-lg border border-stroke bg-white shadow-sm dark:border-strokedark dark:bg-boxdark;
+  @apply rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark;
 }
 
 .card-header {
-  @apply border-b border-stroke py-4 px-6 dark:border-strokedark;
+  @apply border-b border-stroke py-4 px-6.5 dark:border-strokedark;
 }
 
 .card-body {
-  @apply p-6;
+  @apply p-6.5;
 }
 
 /* ===== Stat Cards ===== */
 .stat-card {
-  @apply rounded-lg border border-stroke bg-white py-6 px-7 shadow-sm dark:border-strokedark dark:bg-boxdark;
+  @apply rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default dark:border-strokedark dark:bg-boxdark;
+}
+
+.stat-icon {
+  @apply flex h-11.5 w-11.5 items-center justify-center rounded-full;
+}
+
+.stat-trend {
+  @apply flex items-center gap-1 text-sm font-medium;
+}
+
+.stat-trend.up {
+  @apply text-meta-3;
+}
+
+.stat-trend.down {
+  @apply text-meta-1;
 }
 
 /* ===== Tables ===== */
@@ -49,38 +69,58 @@
   @apply w-full table-auto;
 }
 
+.table thead {
+  @apply bg-gray-2 dark:bg-meta-4;
+}
+
 .table th {
-  @apply bg-slate-100 py-4 px-4 text-left font-medium text-slate-700 dark:bg-meta-4 dark:text-white;
+  @apply py-4 px-4 text-left font-medium text-black dark:text-white;
 }
 
 .table td {
-  @apply border-b border-stroke py-4 px-4 dark:border-strokedark;
+  @apply border-b border-stroke py-5 px-4 dark:border-strokedark;
+}
+
+.table tbody tr {
+  @apply border-b border-stroke dark:border-strokedark;
 }
 
 .table tbody tr:hover {
-  @apply bg-slate-50 dark:bg-boxdark-2;
+  @apply bg-gray-2 dark:bg-meta-4;
 }
 
 /* ===== Buttons ===== */
 .btn {
-  @apply inline-flex items-center justify-center rounded-lg py-2.5 px-5 text-center font-medium transition hover:opacity-90;
+  @apply inline-flex items-center justify-center rounded-md py-3 px-6 text-center font-medium transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 .btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700;
+  @apply bg-primary text-white hover:bg-opacity-90;
 }
 
 .btn-secondary {
-  @apply bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-meta-4 dark:text-white dark:hover:bg-slate-600;
+  @apply bg-stroke text-body hover:bg-opacity-90 dark:bg-meta-4 dark:text-white;
+}
+
+.btn-success {
+  @apply bg-meta-3 text-white hover:bg-opacity-90;
+}
+
+.btn-danger {
+  @apply bg-meta-1 text-white hover:bg-opacity-90;
 }
 
 /* ===== Forms ===== */
 .input {
-  @apply w-full rounded-lg border border-stroke bg-transparent py-2.5 px-4 font-medium outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-strokedark dark:bg-meta-4 dark:focus:border-blue-500;
+  @apply w-full rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 font-medium outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary;
 }
 
 .select {
-  @apply w-full appearance-none rounded-lg border border-stroke bg-white py-2.5 px-4 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-strokedark dark:bg-meta-4;
+  @apply w-full appearance-none rounded border-[1.5px] border-stroke bg-transparent py-3 px-5 outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary;
+}
+
+.label {
+  @apply mb-2.5 block text-black dark:text-white;
 }
 
 /* ===== Chart Container ===== */
@@ -90,12 +130,12 @@
 
 /* ===== Loading ===== */
 .loading-spinner {
-  @apply w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin;
+  @apply w-10 h-10 border-4 border-stroke border-t-primary rounded-full animate-spin dark:border-strokedark dark:border-t-primary;
 }
 
 /* ===== Heatmap ===== */
 .heatmap-cell {
-  @apply rounded-lg p-4 text-center text-white cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg;
+  @apply rounded-sm p-4 text-center text-white cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-4;
 }
 
 /* ===== Badge ===== */
@@ -104,15 +144,19 @@
 }
 
 .badge-success {
-  @apply bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400;
+  @apply bg-[#219653]/[.08] text-meta-3;
 }
 
 .badge-danger {
-  @apply bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400;
+  @apply bg-[#D34053]/[.08] text-meta-1;
 }
 
 .badge-warning {
-  @apply bg-yellow-100 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400;
+  @apply bg-[#FFA70B]/[.08] text-warning;
+}
+
+.badge-info {
+  @apply bg-[#3C50E0]/[.08] text-primary;
 }
 
 /* ===== Rank ===== */
@@ -121,22 +165,74 @@
 }
 
 .rank-1 {
-  @apply bg-gradient-to-br from-yellow-400 to-yellow-600 text-white;
+  @apply bg-gradient-to-br from-[#FFDB58] to-[#FFD700] text-black shadow-4;
 }
 
 .rank-2 {
-  @apply bg-gradient-to-br from-slate-300 to-slate-500 text-white;
+  @apply bg-gradient-to-br from-[#E8E8E8] to-[#C0C0C0] text-black shadow-3;
 }
 
 .rank-3 {
-  @apply bg-gradient-to-br from-amber-600 to-amber-800 text-white;
+  @apply bg-gradient-to-br from-[#CD7F32] to-[#8B4513] text-white shadow-2;
+}
+
+/* ===== Tabs ===== */
+.tabs {
+  @apply flex border-b border-stroke dark:border-strokedark;
+}
+
+.tab {
+  @apply py-3 px-5 text-sm font-medium text-black hover:text-primary dark:text-white dark:hover:text-primary border-b-2 border-transparent transition;
+}
+
+.tab.active {
+  @apply border-primary text-primary;
 }
 
 /* ===== Sidebar specific ===== */
 .sidebar-menu-item {
-  @apply flex items-center gap-3 rounded-lg py-2.5 px-4 font-medium text-bodydark1 duration-200 hover:bg-graydark;
+  @apply flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4;
 }
 
 .sidebar-menu-item.active {
-  @apply bg-graydark;
+  @apply bg-graydark dark:bg-meta-4;
 }
+
+/* ===== Header Dropdown ===== */
+.dropdown {
+  @apply absolute right-0 mt-4 flex w-75 flex-col rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark;
+}
+
+.dropdown-item {
+  @apply flex items-center gap-3.5 border-t border-stroke px-6 py-3 hover:bg-gray-2 dark:border-strokedark dark:hover:bg-meta-4;
+}
+
+/* ===== Animation & Transitions ===== */
+.fade-enter-active,
+.fade-leave-active {
+  @apply transition-opacity duration-200;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  @apply opacity-0;
+}
+
+/* ===== Utilities ===== */
+.text-title-md {
+  @apply text-2xl font-semibold text-black dark:text-white;
+}
+
+.text-title-sm {
+  @apply text-xl font-semibold text-black dark:text-white;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  @apply hidden;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
