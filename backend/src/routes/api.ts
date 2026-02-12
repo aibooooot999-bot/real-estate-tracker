@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { queryTransactions, getStatistics, getPriceTrend } from '../database';
+import { queryTransactions, getStatistics, getPriceTrend, getDistrictAnalysis, getHeatmapData } from '../database';
 import { crawlAllCities } from '../crawler';
 
 const router = Router();
@@ -60,6 +60,26 @@ router.get('/trend', (req, res) => {
   try {
     const { district } = req.query;
     const data = getPriceTrend(district as string);
+    res.json({ success: true, data });
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e?.message || '未知錯誤' });
+  }
+});
+
+// 取得區域行情分析
+router.get('/district-analysis', (req, res) => {
+  try {
+    const data = getDistrictAnalysis();
+    res.json({ success: true, data });
+  } catch (e: any) {
+    res.status(500).json({ success: false, error: e?.message || '未知錯誤' });
+  }
+});
+
+// 取得熱力圖資料
+router.get('/heatmap', (req, res) => {
+  try {
+    const data = getHeatmapData();
     res.json({ success: true, data });
   } catch (e: any) {
     res.status(500).json({ success: false, error: e?.message || '未知錯誤' });

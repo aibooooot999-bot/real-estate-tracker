@@ -212,3 +212,61 @@ export function getPriceTrend(district?: string) {
   
   return db.prepare(sql).all(...bindings);
 }
+
+// 取得區域行情分析
+export function getDistrictAnalysis() {
+  const sql = `
+    SELECT 
+      district,
+      COUNT(*) as transaction_count,
+      AVG(unit_price) as avg_unit_price,
+      MIN(unit_price) as min_unit_price,
+      MAX(unit_price) as max_unit_price,
+      AVG(total_price) as avg_total_price,
+      AVG(building_area) as avg_area,
+      MIN(transaction_date) as earliest_date,
+      MAX(transaction_date) as latest_date
+    FROM transactions 
+    WHERE unit_price > 0 AND district IS NOT NULL AND district != ''
+    GROUP BY district
+    ORDER BY avg_unit_price DESC
+  `;
+  
+  return db.prepare(sql).all();
+}
+
+// 取得熱力圖資料（各區域平均單價）
+export function getHeatmapData() {
+  const sql = `
+    SELECT 
+      district,
+      AVG(unit_price) as avg_unit_price,
+      COUNT(*) as count
+    FROM transactions 
+    WHERE unit_price > 0 AND district IS NOT NULL AND district != ''
+    GROUP BY district
+    HAVING count >= 1
+    ORDER BY avg_unit_price DESC
+  `;
+  
+  const data = db.prepare(sql).all() as { district: string; avg_unit_price: number; count: number }[];
+  
+  // 計算價格區間用於熱力圖顏色
+  if (data.length === 0) return { districts: [], min: 0, max: 0 };
+  
+  const prices = data.map(d => d.avg_unit_price);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  
+  return {
+    districts: data.map(d => ({
+      district: d.district,
+      avgUnitPrice: Math.round(d.avg_unit_price),
+      count: d.count,
+      // 計算熱力值 0-1
+      heat: max > min ? (d.avg_unit_price - min) / (max - min) : 0.5
+    })),
+    min: Math.round(min),
+    max: Math.round(max)
+  };
+}

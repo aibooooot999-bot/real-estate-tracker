@@ -40,7 +40,32 @@ interface TrendData {
   count: number
 }
 
+interface DistrictAnalysis {
+  district: string
+  transaction_count: number
+  avg_unit_price: number
+  min_unit_price: number
+  max_unit_price: number
+  avg_total_price: number
+  avg_area: number
+}
+
+interface HeatmapDistrict {
+  district: string
+  avgUnitPrice: number
+  count: number
+  heat: number
+}
+
+interface HeatmapData {
+  districts: HeatmapDistrict[]
+  min: number
+  max: number
+}
+
 const transactions = ref<Transaction[]>([])
+const districtAnalysis = ref<DistrictAnalysis[]>([])
+const heatmapData = ref<HeatmapData | null>(null)
 const statistics = ref<Statistics | null>(null)
 const trendData = ref<TrendData[]>([])
 const loading = ref(false)
@@ -169,6 +194,39 @@ async function fetchTrend() {
   }
 }
 
+// 取得區域行情分析
+async function fetchDistrictAnalysis() {
+  try {
+    const { data } = await axios.get('/api/district-analysis')
+    if (data.success) {
+      districtAnalysis.value = data.data
+    }
+  } catch (e) {
+    console.error('Failed to fetch district analysis:', e)
+  }
+}
+
+// 取得熱力圖資料
+async function fetchHeatmap() {
+  try {
+    const { data } = await axios.get('/api/heatmap')
+    if (data.success) {
+      heatmapData.value = data.data
+    }
+  } catch (e) {
+    console.error('Failed to fetch heatmap:', e)
+  }
+}
+
+// 取得熱力圖顏色
+function getHeatColor(heat: number): string {
+  // 從綠色(低價)到紅色(高價)的漸層
+  const r = Math.round(255 * heat)
+  const g = Math.round(255 * (1 - heat * 0.7))
+  const b = Math.round(100 * (1 - heat))
+  return `rgb(${r}, ${g}, ${b})`
+}
+
 // 手動抓取資料
 async function triggerCrawl() {
   const season = `${selectedYear.value}S${selectedSeason.value}`
@@ -181,7 +239,7 @@ async function triggerCrawl() {
   try {
     const { data } = await axios.post('/api/crawl', { season })
     alert(data.message || '抓取完成')
-    await Promise.all([fetchStatistics(), fetchTransactions(), fetchTrend()])
+    await Promise.all([fetchStatistics(), fetchTransactions(), fetchTrend(), fetchDistrictAnalysis(), fetchHeatmap()])
   } catch (e: any) {
     alert('抓取失敗: ' + (e.response?.data?.error || e.message))
   } finally {
@@ -275,6 +333,8 @@ onMounted(() => {
   fetchStatistics()
   fetchTransactions()
   fetchTrend()
+  fetchDistrictAnalysis()
+  fetchHeatmap()
 })
 </script>
 
@@ -312,6 +372,72 @@ onMounted(() => {
       </div>
       <div class="chart-container">
         <Line :data="chartData" :options="chartOptions" />
+      </div>
+    </div>
+
+    <!-- 價格熱力圖 -->
+    <div class="card" v-if="heatmapData && heatmapData.districts.length > 0">
+      <div class="card-header">
+        🔥 價格熱力圖
+        <span class="heatmap-legend">
+          <span class="legend-low">低價</span>
+          <span class="legend-bar"></span>
+          <span class="legend-high">高價</span>
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="heatmap-info">
+          單價範圍：{{ formatUnitPrice(heatmapData.min) }} ~ {{ formatUnitPrice(heatmapData.max) }}
+        </div>
+        <div class="heatmap-grid">
+          <div 
+            v-for="d in heatmapData.districts" 
+            :key="d.district"
+            class="heatmap-cell"
+            :style="{ backgroundColor: getHeatColor(d.heat) }"
+            :title="`${d.district}\n平均單價：${formatUnitPrice(d.avgUnitPrice)}\n交易筆數：${d.count}`"
+          >
+            <div class="cell-district">{{ d.district.replace(/^.*[市縣]/, '') }}</div>
+            <div class="cell-price">{{ (d.avgUnitPrice / 10000).toFixed(1) }}萬</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 區域行情分析 -->
+    <div class="card" v-if="districtAnalysis.length > 0">
+      <div class="card-header">
+        📊 區域行情分析
+      </div>
+      <div class="card-body" style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>排名</th>
+              <th>區域</th>
+              <th>平均單價</th>
+              <th>單價範圍</th>
+              <th>平均總價</th>
+              <th>平均坪數</th>
+              <th>交易筆數</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(d, index) in districtAnalysis" :key="d.district">
+              <td>
+                <span class="rank" :class="{ 'rank-top': index < 3 }">{{ index + 1 }}</span>
+              </td>
+              <td>{{ d.district }}</td>
+              <td class="unit-price">{{ formatUnitPrice(d.avg_unit_price) }}</td>
+              <td class="price-range">
+                {{ formatUnitPrice(d.min_unit_price) }} ~ {{ formatUnitPrice(d.max_unit_price) }}
+              </td>
+              <td class="price">{{ formatPrice(d.avg_total_price) }}</td>
+              <td>{{ d.avg_area?.toFixed(1) || '-' }} 坪</td>
+              <td>{{ d.transaction_count }} 筆</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
